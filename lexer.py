@@ -154,12 +154,11 @@ class Lexer():
                         self.errorManager.syntaxError(f"'{self.currentLetter}' bilinmeyen bir işaret.")    
         if self.currentLetter is None:
             self.tokens.append(["EOF",None])
-
+        return self.tokens
 if __name__ == "__main__":
     with open("testNotepad.txt","r",encoding="utf-8") as file:
         content = file.readlines()
         content = "".join(content)
 
     elexer = Lexer(content)
-    elexer.lexer()
-    print(elexer.tokens)
+    print(elexer.lexer())
