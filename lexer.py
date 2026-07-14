@@ -14,17 +14,41 @@ class Error():
     
 class Lexer():
     def __init__(self,text: str):
-        self.text = text
-        self.position = 0
-        self.currentLetter = self.text[self.position] #anlık harfi alıyoruz
         self.tokens = []
-        self.errorManager = Error(self.text)
-
+        if text:
+            self.text = text
+            self.position = 0
+            self.currentLetter = self.text[self.position] #anlık harfi alıyoruz
+        
+            self.errorManager = Error(self.text)
+            self.dataTypes = ["int","float","str","bool"]
+            self.basicCommandMap = {"yaz":"PRINT_COMMAND","yap":"ASSIGN_COMMAND","ekle":"ADD_COMMAND"}
+            self.outlierAlphaValues = ["_"]
+            self.usefulSigns = {"+":"PLUS","-":"MINUS","*":"STAR","/":"SLASH","(":"LPAREN",")":"RPAREN","[":"LBRACKET","]":"RBRACKET","{":"LBRACE","}":"RBRACE","\n":"NEWLINE",".":"DOT",",":"COMMA",";":"SEMICOLON",":":"COLON",">":"GT","<":"LT","=":"ASSIGN"}
+            self.advanceSigns = [" "]
+        else:
+            self.tokens.append(["EOF",None])
     def stringMod(self):
         stringPack = ""
         self.advance()
         while (not(self.currentLetter is None) and self.currentLetter != '"'):
-            stringPack += self.currentLetter
+            if self.currentLetter == "\\":
+                self.advance() 
+                
+                if self.currentLetter is None:
+                    self.errorManager.syntaxError("kaçış karakterinden sonra metin aniden bitti.")
+                if self.currentLetter == "n":
+                    stringPack += "\n"
+                elif self.currentLetter == "t":
+                    stringPack += "\t"
+                elif self.currentLetter == '"':
+                    stringPack += '"' 
+                elif self.currentLetter == "\\":
+                    stringPack += "\\" 
+                else:
+                    stringPack += "\\" + self.currentLetter
+            else:
+                stringPack += self.currentLetter
             self.advance()
         if (self.currentLetter != '"'):
             self.errorManager.syntaxError("kapatılmamış bir tırnak var.")
@@ -32,20 +56,56 @@ class Lexer():
 
         self.advance()
     
+    def lookAhead(self,offset = 1):
+        if (self.position + offset < len(self.text) - 1):
+            return self.text[self.position + offset]
+        else:
+            self.currentLetter = None
+
     def alphaMod(self):
         alphaPack = ""
-        while (not(self.currentLetter is None) and self.currentLetter.isalpha()):
+        while (not(self.currentLetter is None) and (self.currentLetter.isalpha() or self.currentLetter in self.outlierAlphaValues)):
             alphaPack += self.currentLetter
             self.advance()
-        self.tokens.append(["ALPHA",alphaPack])
+        
+        if not self.currentLetter is None and self.currentLetter.isdigit():
+            while (not(self.currentLetter is None) and (self.currentLetter.isalpha() or self.currentLetter in self.outlierAlphaValues or self.currentLetter.isdigit())):
+                alphaPack += self.currentLetter
+                self.advance()
+        
+        if alphaPack in self.basicCommandMap:
+            self.tokens.append([self.basicCommandMap[alphaPack],alphaPack])
+        elif alphaPack in self.dataTypes:
+            self.tokens.append(["DTYPE",alphaPack])
+        else:
+            self.tokens.append(["ID",alphaPack])
 
     def numberMod(self):
         numberPack = ""
         isFloat = False
+        if (self.currentLetter == "-"):
+            numberPack += "-"
+            self.advance()
         while (not(self.currentLetter is None) and self.currentLetter.isdigit()):
             numberPack += self.currentLetter
             self.advance()
-        self.tokens.append(["NUMBER",numberPack])
+        
+        if self.currentLetter == ".":
+            if self.lookAhead() is None or not self.lookAhead().isdigit():
+                self.errorManager.syntaxError("tamamlanmamış bir float değeri var.")
+            if self.lookAhead().isdigit():
+                numberPack += "."
+                isFloat =  True
+                self.advance()
+                while (not(self.currentLetter is None) and self.currentLetter.isdigit()):
+                    numberPack += self.currentLetter
+                    self.advance()
+        
+        if isFloat:
+            self.tokens.append(["FLOAT",numberPack])
+        else:
+            self.tokens.append(["INT",numberPack])
+           
     def advance(self): #position'u bir kaydıran fonksiyon
         if (self.position + 1 < len(self.text)):
             self.position += 1
@@ -55,7 +115,7 @@ class Lexer():
 
     def lexer(self):
         while (not self.currentLetter is None):
-            if (self.currentLetter.isalpha()):
+            if (self.currentLetter.isalpha() or self.currentLetter in self.outlierAlphaValues):
                 self.alphaMod()
 
             elif (self.currentLetter == '"'):
@@ -65,7 +125,41 @@ class Lexer():
                 self.numberMod()
 
             else:
-                self.advance()
-            
+                if (self.currentLetter == "-"):
+                    if (not self.lookAhead() is None and self.lookAhead().isdigit()):
+                        self.numberMod()
+                    else:
+                        self.tokens.append(["MINUS","-"])
+                        self.advance()
+                    
+                elif (self.currentLetter == "+"):
+                    if (not self.lookAhead() is None and self.lookAhead().isdigit()):
+                        self.advance()
+                        self.numberMod()
+                    else:
+                        self.tokens.append(["PLUS","+"])
+                        self.advance()
+                
+                elif (self.currentLetter in self.usefulSigns):
+                    self.tokens.append([self.usefulSigns[self.currentLetter],self.currentLetter])
+                    self.advance()
+                
+                else:
+                    if self.currentLetter == "#":
+                        while(not self.currentLetter is None and not self.currentLetter == "\n"):
+                            self.advance()
+                    elif self.currentLetter in self.advanceSigns:
+                        self.advance()
+                    else:
+                        self.errorManager.syntaxError(f"'{self.currentLetter}' bilinmeyen bir işaret.")    
         if self.currentLetter is None:
             self.tokens.append(["EOF",None])
+
+if __name__ == "__main__":
+    with open("testNotepad.txt","r",encoding="utf-8") as file:
+        content = file.readlines()
+        content = "".join(content)
+
+    elexer = Lexer(content)
+    elexer.lexer()
+    print(elexer.tokens)
