@@ -1,0 +1,3 @@
+yaz < "Merhaba dünya" , "nasılsın" , 12
+yap < float x = 3.14
+ekle < x,1
