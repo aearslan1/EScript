@@ -1,3 +1,14 @@
-yaz < "Merhaba dünya" , "nasılsın" , 12
-yap < float x = 3.14
-ekle < x,1
+yaz < "Merhaba" + isim + ",hoş geldin." + [1,2,3,3.14] +  merhaba(1,2) + "SA"
+yap < tamsayı < x = 3.14
+ekle < x < 3.14
+çıkar < x < 4.3
+çarp < x < 3.3
+
+böl < x < 5.2
+yaz < x
+
+fnk yazdir(a,b){
+    yaz < a + b
+    yap < tamsayı < x = 3.14
+    döndür [a,b]
+}
