@@ -14,14 +14,14 @@ class Error():
         sys.exit(1)
 
 class Parser():
-    def __init__(self,text: str):
-        self.tokens = lexer.Lexer(text).lexer()
+    def __init__(self,text: str,tokens: list):
+        self.tokens = tokens
         self.functionMode = False
         self.position = 0
         self.currentToken = self.tokens[self.position]
         self.errorManager = Error(text) 
         self.endTokens = ["RBRACE","NEWLINE","EOF"]
-        self.freeValues = {"tamsayı":"0","mantıksal":"doğru","ondalık":"0.0","metin":"","liste":"[]"}
+        self.freeValues = {"tamsayı":["INT",0],"mantıksal":["BOOL","doğru"],"ondalık":["BOOL","0.0"],"metin":["STRING",""],"liste":["LIST","[]"]}
     def valueNode(self):
         if (self.currentToken[0] == "LBRACKET"):
             self.consume("LBRACKET")
@@ -36,17 +36,27 @@ class Parser():
                     break
                 
             return ["ListNode",values]
-        value = self.consume("INT","FLOAT","STRING","BOOL","ID")
-        if (value[0] == "ID" and self.currentToken[0] == "LPAREN"):
-            self.consume("LPAREN")
-            params = []
-            while (not self.currentToken[0] in self.endTokens and self.currentToken[0] != "RPAREN"):
-                param = self.valueNode()
-                params.append(param)
-                if (not self.currentToken[0] == "RPAREN"):
-                    self.consume("COMMA")
-            self.consume("RPAREN")
-            value = ["FunctionCall",params]
+        elif (self.currentToken[0] == "COMP_COMMAND"):
+            self.consume("COMP_COMMAND")
+            self.consume("SEMICOLON")
+            var1 = self.consume("ID","FLOAT","INT")
+            compOp = self.consume("LT","GT","LE","GE","EQ","NEQ")
+            var2 = self.consume("ID","FLOAT","INT")
+            value = ["CompNode",var1,compOp,var2]
+        else:
+            value = self.consume("INT","FLOAT","STRING","BOOL","ID")
+            if (value[0] == "ID" and self.currentToken[0] == "LPAREN"):
+                self.consume("LPAREN")
+                params = []
+                while (not self.currentToken[0] in self.endTokens and self.currentToken[0] != "RPAREN"):
+                    param = self.valueNode()
+                    params.append(param)
+                    if (not self.currentToken[0] == "RPAREN"):
+                        self.consume("COMMA")
+                self.consume("RPAREN")
+                value = ["FunctionCall",params]
+            
+        
         node = ["ValueNode",value]
         return node
     def lookAhead(self,offset = 1):
@@ -149,6 +159,7 @@ class Parser():
                 self.consume("LT")
                 value = self.valueNode()
                 node.append(["MultNode",varName,value])
+          
             elif (self.currentToken[0] == "DIV_COMMAND"):
                 self.consume("DIV_COMMAND")
                 willPrintValues = []
@@ -185,7 +196,16 @@ class Parser():
                 node.append(["ReturnNode",value])
                 self.consume("NEWLINE","EOF","RBRACE")
             
-        
+            elif (self.currentToken[0] == "ID"):
+                funcName = self.consume("ID")
+                self.consume("LPAREN")
+                params = []
+                while (not self.currentToken[0] in self.endTokens and self.currentToken[0] != "RPAREN"):
+                    param = self.valueNode()
+                    params.append(param)
+                    if (not self.currentToken[0] == "RPAREN"):
+                        self.consume("COMMA")
+                node.append(["FunctionCallNode",funcName,params])
             else:
                 self.advance()
         return node
@@ -195,7 +215,7 @@ if __name__ == "__main__":
         content = file.readlines()
         content = "".join(content)
 
-    eparser = Parser(content)
+    eparser = Parser(content,lexer.Lexer(content).lexer())
     node = eparser.parser()
     for i in node:
         print(i)
