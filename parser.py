@@ -16,11 +16,12 @@ class Error():
 class Parser():
     def __init__(self,text: str):
         self.tokens = lexer.Lexer(text).lexer()
-        self.nodes = []
+        self.functionMode = False
         self.position = 0
         self.currentToken = self.tokens[self.position]
         self.errorManager = Error(text) 
         self.endTokens = ["RBRACE","NEWLINE","EOF"]
+        self.freeValues = {"tamsayı":"0","mantıksal":"doğru","ondalık":"0.0","metin":"","liste":"[]"}
     def valueNode(self):
         if (self.currentToken[0] == "LBRACKET"):
             self.consume("LBRACKET")
@@ -68,7 +69,10 @@ class Parser():
             self.currentToken = None
 
     def parser(self):
+        node = []
         while(self.currentToken[0] != "EOF"):
+            if (self.functionMode and self.currentToken[0] == "RBRACE"):
+                break
             if (self.currentToken[0] == "PRINT_COMMAND"):
                 self.consume("PRINT_COMMAND")
                 willPrintValues = []
@@ -87,9 +91,104 @@ class Parser():
                     end = "\n"
                 
                     
-                self.nodes.append(["PrintNode",willPrintValues,end])
+                node.append(["PrintNode",willPrintValues,end])
+            elif (self.currentToken[0] == "ASSIGN_COMMAND"):
+                self.consume("ASSIGN_COMMAND")
+                willPrintValues = []
+                self.consume("LT")
+                dtype = self.consume("DTYPE")
+                self.consume("LT")
+                varName = self.consume("ID")
+
+                if (self.currentToken[0] == "ASSIGN"):
+                    self.consume("ASSIGN")
+                    value = self.valueNode()
+                else:
+                    value = self.freeValues[dtype[1]]
+
+                if (self.functionMode):
+                    if (not self.currentToken[0] in self.endTokens):
+                        self.errorManager.syntaxError("fazla token tespit edildi.")
+                else:
+                    if (not self.currentToken[0] in ["NEWLINE","EOF"]):
+                        self.errorManager.syntaxError(f"fazla token tespit edildi '{self.currentToken[0]}'")
+                node.append(["AssignNode",dtype,varName,value])
+            
+            elif (self.currentToken[0] == "ADD_COMMAND"):
+                self.consume("ADD_COMMAND")
+                willPrintValues = []
+                self.consume("LT")
+                varName = self.consume("ID")
+                self.consume("LT")
+                value = self.valueNode()
+                node.append(["AddNode",varName,value])
+
+            elif (self.currentToken[0] == "ADD_COMMAND"):
+                self.consume("ADD_COMMAND")
+                willPrintValues = []
+                self.consume("LT")
+                varName = self.consume("ID")
+                self.consume("LT")
+                value = self.valueNode()
+                node.append(["AddNode",varName,value])
+
+            elif (self.currentToken[0] == "MINUS_COMMAND"):
+                self.consume("MINUS_COMMAND")
+                willPrintValues = []
+                self.consume("LT")
+                varName = self.consume("ID")
+                self.consume("LT")
+                value = self.valueNode()
+                node.append(["MinusNode",varName,value])
+            
+            elif (self.currentToken[0] == "MULT_COMMAND"):
+                self.consume("MULT_COMMAND")
+                willPrintValues = []
+                self.consume("LT")
+                varName = self.consume("ID")
+                self.consume("LT")
+                value = self.valueNode()
+                node.append(["MultNode",varName,value])
+            elif (self.currentToken[0] == "DIV_COMMAND"):
+                self.consume("DIV_COMMAND")
+                willPrintValues = []
+                self.consume("LT")
+                varName = self.consume("ID")
+                self.consume("LT")
+                value = self.valueNode()
+                node.append(["DivNode",varName,value])
+
+            elif (self.currentToken[0] == "FUNCTIONDEFINE_COMMAND"):
+                self.functionMode = True
+                self.consume("FUNCTIONDEFINE_COMMAND")
+                funcName = self.consume("ID")
+                self.consume("LPAREN")
+                params = []
+                while (not self.currentToken[0] in self.endTokens and self.currentToken[0] != "RPAREN"):
+                    param = self.consume("ID")
+                    params.append(param)
+                    if (not self.currentToken[0] in self.endTokens and self.currentToken[0] != "RPAREN"):
+                          self.consume("COMMA")
+                self.consume("RPAREN")
+                self.consume("LBRACE")
+                while (self.currentToken[0] != "EOF" and self.currentToken[0] != "RBRACE"):
+                    functionNode = self.parser()
+                self.consume("RBRACE")
+
+                node.append(["FunctionDefineNode",funcName,params,functionNode])
+
+            elif (self.currentToken[0] == "RETURN_COMMAND"):
+                self.consume("RETURN_COMMAND")
+                if (not self.functionMode):
+                    self.errorManager.syntaxError("'döndür' komutu sadece fonksiyon içinde çalışabilir")
+                value = self.valueNode()
+                node.append(["ReturnNode",value])
+                self.consume("NEWLINE","EOF","RBRACE")
+            
+        
             else:
                 self.advance()
+        return node
 
 if __name__ == "__main__":
     with open("testNotepad.txt","r",encoding="utf-8") as file:
@@ -97,5 +196,7 @@ if __name__ == "__main__":
         content = "".join(content)
 
     eparser = Parser(content)
-    eparser.parser()
-    print(eparser.nodes)
+    node = eparser.parser()
+    for i in node:
+        print(i)
+    
