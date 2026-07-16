@@ -22,9 +22,9 @@ class Lexer():
         
             self.errorManager = Error(self.text)
             self.dataTypes = ["tamsayı","ondalık","metin","mantıksal","liste"]
-            self.basicCommandMap = {"yaz":"PRINT_COMMAND","yap":"ASSIGN_COMMAND","ekle":"ADD_COMMAND","fnk":"FUNCTIONDEFINE_COMMAND","çıkar":"MINUS_COMMAND","çarp":"MULT_COMMAND","böl":"DIV_COMMAND","eğer" : "IF_COMMAND","döndür":"RETURN_COMMAND"}
+            self.basicCommandMap = {"yaz":"PRINT_COMMAND","yap":"ASSIGN_COMMAND","ekle":"ADD_COMMAND","fnk":"FUNCTIONDEFINE_COMMAND","çıkar":"MINUS_COMMAND","çarp":"MULT_COMMAND","böl":"DIV_COMMAND","eğer" : "IF_COMMAND","döndür":"RETURN_COMMAND","and":"AND_GATE","or":"OR_GATE","xor":"XOR_GATE","kıyas":"COMP_COMMAND"}
             self.outlierAlphaValues = ["_"]
-            self.usefulSigns = {"+":"PLUS","-":"MINUS","*":"STAR","/":"SLASH","(":"LPAREN",")":"RPAREN","[":"LBRACKET","]":"RBRACKET","{":"LBRACE","}":"RBRACE","\n":"NEWLINE",".":"DOT",",":"COMMA",";":"SEMICOLON",":":"COLON",">":"GT","<":"LT","=":"ASSIGN"}
+            self.usefulSigns = {"+":"PLUS","-":"MINUS","*":"STAR","/":"SLASH","(":"LPAREN",")":"RPAREN","[":"LBRACKET","]":"RBRACKET","{":"LBRACE","}":"RBRACE","\n":"NEWLINE",".":"DOT",",":"COMMA",";":"SEMICOLON",":":"COLON"}
             self.advanceSigns = [" ", "\t", "\r"]
         else:
             self.tokens.append(["EOF",None])
@@ -57,7 +57,7 @@ class Lexer():
         self.advance()
     
     def lookAhead(self,offset = 1):
-        if (self.position + offset < len(self.text) - 1):
+        if (self.position + offset < len(self.text) ):
             return self.text[self.position + offset]
         else:
             self.currentLetter = None
@@ -95,6 +95,7 @@ class Lexer():
             self.advance()
         
         if self.currentLetter == ".":
+
             if self.lookAhead() is None or not self.lookAhead().isdigit():
                 self.errorManager.syntaxError("tamamlanmamış bir float değeri var.")
             if self.lookAhead().isdigit():
@@ -106,9 +107,9 @@ class Lexer():
                     self.advance()
         
         if isFloat:
-            self.tokens.append(["FLOAT",numberPack])
+            self.tokens.append(["FLOAT",float(numberPack)])
         else:
-            self.tokens.append(["INT",numberPack])
+            self.tokens.append(["INT",int(numberPack)])
            
     def advance(self): #position'u bir kaydıran fonksiyon
         if (self.position + 1 < len(self.text)):
@@ -144,6 +145,38 @@ class Lexer():
                         self.tokens.append(["PLUS","+"])
                         self.advance()
                 
+                elif (self.currentLetter == "="):
+                    self.advance()
+                    if self.currentLetter == "=":
+                        self.tokens.append(["EQ","=="])
+                        self.advance()
+                    else:
+                        self.tokens.append(["ASSIGN","="])
+                
+                elif (self.currentLetter == "!"):
+                    self.advance()
+                    if self.currentLetter == "=":
+                        self.tokens.append(["NEQ","!="])
+                        self.advance()
+                    else:
+                        self.errorManager.syntaxError(f"'!' bilinmeyen bir işaret.")    
+                
+                elif (self.currentLetter == "<"):
+                    self.advance()
+                    if self.currentLetter == "=":
+                        self.tokens.append(["LE","<="])
+                        self.advance()
+                    else:
+                        self.tokens.append(["LT","<"])
+                
+                elif (self.currentLetter == ">"):
+                    self.advance()
+                    if self.currentLetter == "=":
+                        self.tokens.append(["GE",">="])
+                        self.advance()
+                    else:
+                        self.tokens.append(["GT",">"])
+                        
                 elif (self.currentLetter in self.usefulSigns):
                     self.tokens.append([self.usefulSigns[self.currentLetter],self.currentLetter])
                     self.advance()
