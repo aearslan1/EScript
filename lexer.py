@@ -21,11 +21,11 @@ class Lexer():
             self.currentLetter = self.text[self.position] #anlık harfi alıyoruz
         
             self.errorManager = Error(self.text)
-            self.dataTypes = ["int","float","str","bool"]
-            self.basicCommandMap = {"yaz":"PRINT_COMMAND","yap":"ASSIGN_COMMAND","ekle":"ADD_COMMAND","fnk":"FUNCTION_CMD"}
+            self.dataTypes = ["tamsayı","ondalık","metin","mantıksal","liste"]
+            self.basicCommandMap = {"yaz":"PRINT_COMMAND","yap":"ASSIGN_COMMAND","ekle":"ADD_COMMAND","fnk":"FUNCTIONDEFINE_COMMAND","çıkar":"MINUS_COMMAND","çarp":"MULT_COMMAND","böl":"DIV_COMMAND","eğer" : "IF_COMMAND","döndür":"RETURN_COMMAND"}
             self.outlierAlphaValues = ["_"]
             self.usefulSigns = {"+":"PLUS","-":"MINUS","*":"STAR","/":"SLASH","(":"LPAREN",")":"RPAREN","[":"LBRACKET","]":"RBRACKET","{":"LBRACE","}":"RBRACE","\n":"NEWLINE",".":"DOT",",":"COMMA",";":"SEMICOLON",":":"COLON",">":"GT","<":"LT","=":"ASSIGN"}
-            self.advanceSigns = [" "]
+            self.advanceSigns = [" ", "\t", "\r"]
         else:
             self.tokens.append(["EOF",None])
     def stringMod(self):
