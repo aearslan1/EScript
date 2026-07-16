@@ -22,7 +22,7 @@ class Lexer():
         
             self.errorManager = Error(self.text)
             self.dataTypes = ["int","float","str","bool"]
-            self.basicCommandMap = {"yaz":"PRINT_COMMAND","yap":"ASSIGN_COMMAND","ekle":"ADD_COMMAND"}
+            self.basicCommandMap = {"yaz":"PRINT_COMMAND","yap":"ASSIGN_COMMAND","ekle":"ADD_COMMAND","fnk":"FUNCTION_CMD"}
             self.outlierAlphaValues = ["_"]
             self.usefulSigns = {"+":"PLUS","-":"MINUS","*":"STAR","/":"SLASH","(":"LPAREN",")":"RPAREN","[":"LBRACKET","]":"RBRACKET","{":"LBRACE","}":"RBRACE","\n":"NEWLINE",".":"DOT",",":"COMMA",";":"SEMICOLON",":":"COLON",">":"GT","<":"LT","=":"ASSIGN"}
             self.advanceSigns = [" "]
@@ -77,6 +77,10 @@ class Lexer():
             self.tokens.append([self.basicCommandMap[alphaPack],alphaPack])
         elif alphaPack in self.dataTypes:
             self.tokens.append(["DTYPE",alphaPack])
+        
+        elif alphaPack == "doğru" or alphaPack == "yanlış":
+            self.tokens.append(["BOOL",alphaPack])
+            
         else:
             self.tokens.append(["ID",alphaPack])
 
