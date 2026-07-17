@@ -36,13 +36,7 @@ class Parser():
                     break
                 
             return ["ListNode",values]
-        elif (self.currentToken[0] == "COMP_COMMAND"):
-            self.consume("COMP_COMMAND")
-            self.consume("SEMICOLON")
-            var1 = self.consume("ID","FLOAT","INT")
-            compOp = self.consume("LT","GT","LE","GE","EQ","NEQ")
-            var2 = self.consume("ID","FLOAT","INT")
-            value = ["CompNode",var1,compOp,var2]
+
         else:
             value = self.consume("INT","FLOAT","STRING","BOOL","ID")
             if (value[0] == "ID" and self.currentToken[0] == "LPAREN"):
@@ -60,7 +54,7 @@ class Parser():
         node = ["ValueNode",value]
         return node
     def lookAhead(self,offset = 1):
-        if (self.position + offset < len(self.tokens) - 1):
+        if (self.position + offset < len(self.tokens)):
             return self.tokens[self.position + offset][0]
         return None
     def consume(self,*types):
@@ -129,25 +123,17 @@ class Parser():
                 willPrintValues = []
                 self.consume("LT")
                 varName = self.consume("ID")
-                self.consume("LT")
+                self.consume("COMMA")
                 value = self.valueNode()
                 node.append(["AddNode",varName,value])
 
-            elif (self.currentToken[0] == "ADD_COMMAND"):
-                self.consume("ADD_COMMAND")
-                willPrintValues = []
-                self.consume("LT")
-                varName = self.consume("ID")
-                self.consume("LT")
-                value = self.valueNode()
-                node.append(["AddNode",varName,value])
 
             elif (self.currentToken[0] == "MINUS_COMMAND"):
                 self.consume("MINUS_COMMAND")
                 willPrintValues = []
                 self.consume("LT")
                 varName = self.consume("ID")
-                self.consume("LT")
+                self.consume("COMMA")
                 value = self.valueNode()
                 node.append(["MinusNode",varName,value])
             
@@ -156,7 +142,7 @@ class Parser():
                 willPrintValues = []
                 self.consume("LT")
                 varName = self.consume("ID")
-                self.consume("LT")
+                self.consume("COMMA")
                 value = self.valueNode()
                 node.append(["MultNode",varName,value])
           
@@ -165,7 +151,7 @@ class Parser():
                 willPrintValues = []
                 self.consume("LT")
                 varName = self.consume("ID")
-                self.consume("LT")
+                self.consume("COMMA")
                 value = self.valueNode()
                 node.append(["DivNode",varName,value])
 
@@ -206,6 +192,72 @@ class Parser():
                     if (not self.currentToken[0] == "RPAREN"):
                         self.consume("COMMA")
                 node.append(["FunctionCallNode",funcName,params])
+            
+            elif (self.currentToken[0] == "AND_GATE"):
+                self.consume("AND_GATE")
+                self.consume("LT")
+                varName = self.consume("ID")
+                self.consume("COMMA")
+                value = self.valueNode()
+                self.consume("LT")
+
+                assignVar = self.consume("ID")
+                node.append(["AndGateNode",varName,value,assignVar])
+            
+            elif (self.currentToken[0] == "OR_GATE"):
+                self.consume("OR_GATE")
+                self.consume("LT")
+                varName = self.consume("ID")
+                self.consume("COMMA")
+                value = self.valueNode()
+                self.consume("LT")
+
+                assignVar = self.consume("ID")
+                node.append(["OrGateNode",varName,value,assignVar])
+            
+            elif (self.currentToken[0] == "XOR_GATE"):
+                self.consume("XOR_GATE")
+                self.consume("LT")
+                varName = self.consume("ID")
+                self.consume("COMMA")
+                value = self.valueNode()
+                self.consume("LT")
+
+                assignVar = self.consume("ID")
+                node.append(["XorGateNode",varName,value,assignVar])
+            
+            elif (self.currentToken[0] == "COMPARE_COMMAND"):
+                self.consume("COMPARE_COMMAND")
+                self.consume("LT")
+                self.consume("LPAREN")
+                val1 = self.valueNode()
+                logicOp = self.consume("LT","EQ","NEQ","GT","LE","GE")
+                val2 = self.valueNode()
+                self.consume("RPAREN")
+                self.consume("LT")
+                assignVar = self.consume("ID")
+                node.append(["CompareNode",val1,logicOp,val2,assignVar])
+            
+            elif (self.currentToken[0] == "IF_COMMAND"):
+                self.functionMode = True
+                self.consume("IF_COMMAND")
+                result = self.valueNode()
+                self.consume("LBRACE")
+                while (self.currentToken[0] != "EOF" and self.currentToken[0] != "RBRACE"):
+                    ifNode = self.parser()
+                self.consume("RBRACE")
+
+                node.append(["IfNode",result,ifNode])
+            
+            elif (self.currentToken[0] == "ELSE_COMMAND"):
+                self.functionMode = True
+                self.consume("ELSE_COMMAND")
+                self.consume("LBRACE")
+                while (self.currentToken[0] != "EOF" and self.currentToken[0] != "RBRACE"):
+                    elseNode = self.parser()
+                self.consume("RBRACE")
+
+                node.append(["ElseNode",elseNode])
             else:
                 self.advance()
         return node
