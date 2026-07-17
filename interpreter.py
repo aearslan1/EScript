@@ -10,8 +10,5 @@ class Interpreter():
             self.position += 1
             self.currentNode = self.node[self.position]
     
-    def consume(self,*types):
-        pass
     def interpreter(self):
         pass
-        
