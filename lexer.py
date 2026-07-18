@@ -27,7 +27,7 @@ class Lexer():
             self.usefulSigns = {"+":"PLUS","-":"MINUS","*":"STAR","/":"SLASH","(":"LPAREN",")":"RPAREN","[":"LBRACKET","]":"RBRACKET","{":"LBRACE","}":"RBRACE","\n":"NEWLINE",".":"DOT",",":"COMMA",";":"SEMICOLON",":":"COLON"}
             self.advanceSigns = [" ", "\t", "\r"]
         else:
-            self.tokens.append(["EOF",None])
+            self.currentLetter = None
     def stringMod(self):
         stringPack = ""
         self.advance()
@@ -119,6 +119,7 @@ class Lexer():
             self.currentLetter = None
 
     def lexer(self):
+
         while (not self.currentLetter is None):
             if (self.currentLetter.isalpha() or self.currentLetter in self.outlierAlphaValues):
                 self.alphaMod()

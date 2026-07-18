@@ -21,7 +21,7 @@ class Parser():
         self.currentToken = self.tokens[self.position]
         self.errorManager = Error(text) 
         self.endTokens = ["RBRACE","NEWLINE","EOF"]
-        self.freeValues = {"tamsayı":["INT",0],"mantıksal":["BOOL","doğru"],"ondalık":["BOOL","0.0"],"metin":["STRING",""],"liste":["LIST","[]"]}
+        self.freeValues = {"tamsayı":("INT",0),"mantıksal":("BOOL","doğru"),"ondalık":("BOOL","0.0"),"metin":("STRING",""),"liste":("LIST","[]")}
     def valueNode(self):
         if (self.currentToken[0] == "LBRACKET"):
             self.consume("LBRACKET")
