@@ -35,7 +35,7 @@ class Parser():
                     self.consume("RBRACKET")
                     break
                 
-            return ["ListNode",values]
+            return ("ListNode",values)
 
         else:
             value = self.consume("INT","FLOAT","STRING","BOOL","ID")
@@ -48,10 +48,10 @@ class Parser():
                     if (not self.currentToken[0] == "RPAREN"):
                         self.consume("COMMA")
                 self.consume("RPAREN")
-                value = ["FunctionCall",params]
+                value = ("FunctionCall",params)
             
         
-        node = ["ValueNode",value]
+        node = ("ValueNode",value)
         return node
     def lookAhead(self,offset = 1):
         if (self.position + offset < len(self.tokens)):
@@ -92,10 +92,10 @@ class Parser():
                     self.consume("LT")
                     end = self.valueNode()
                 else:
-                    end = "\n"
+                    end = ("ValueNode",("STRING","\n"))
                 
                     
-                node.append(["PrintNode",willPrintValues,end])
+                node.append(("PrintNode",willPrintValues,end))
             elif (self.currentToken[0] == "ASSIGN_COMMAND"):
                 self.consume("ASSIGN_COMMAND")
                 willPrintValues = []
@@ -116,7 +116,7 @@ class Parser():
                 else:
                     if (not self.currentToken[0] in ["NEWLINE","EOF"]):
                         self.errorManager.syntaxError(f"fazla token tespit edildi '{self.currentToken[0]}'")
-                node.append(["AssignNode",dtype,varName,value])
+                node.append(("AssignNode",dtype,varName,value))
             
             elif (self.currentToken[0] == "ADD_COMMAND"):
                 self.consume("ADD_COMMAND")
@@ -125,7 +125,7 @@ class Parser():
                 varName = self.consume("ID")
                 self.consume("COMMA")
                 value = self.valueNode()
-                node.append(["AddNode",varName,value])
+                node.append(("AddNode",varName,value))
 
 
             elif (self.currentToken[0] == "MINUS_COMMAND"):
@@ -135,7 +135,7 @@ class Parser():
                 varName = self.consume("ID")
                 self.consume("COMMA")
                 value = self.valueNode()
-                node.append(["MinusNode",varName,value])
+                node.append(("MinusNode",varName,value))
             
             elif (self.currentToken[0] == "MULT_COMMAND"):
                 self.consume("MULT_COMMAND")
@@ -144,7 +144,7 @@ class Parser():
                 varName = self.consume("ID")
                 self.consume("COMMA")
                 value = self.valueNode()
-                node.append(["MultNode",varName,value])
+                node.append(("MultNode",varName,value))
           
             elif (self.currentToken[0] == "DIV_COMMAND"):
                 self.consume("DIV_COMMAND")
@@ -153,7 +153,7 @@ class Parser():
                 varName = self.consume("ID")
                 self.consume("COMMA")
                 value = self.valueNode()
-                node.append(["DivNode",varName,value])
+                node.append(("DivNode",varName,value))
 
             elif (self.currentToken[0] == "FUNCTIONDEFINE_COMMAND"):
                 self.functionMode = True
@@ -172,15 +172,15 @@ class Parser():
                     functionNode = self.parser()
                 self.consume("RBRACE")
 
-                node.append(["FunctionDefineNode",funcName,params,functionNode])
+                node.append(("FunctionDefineNode",funcName,params,functionNode))
 
             elif (self.currentToken[0] == "RETURN_COMMAND"):
                 self.consume("RETURN_COMMAND")
                 if (not self.functionMode):
                     self.errorManager.syntaxError("'döndür' komutu sadece fonksiyon içinde çalışabilir")
                 value = self.valueNode()
-                node.append(["ReturnNode",value])
-                self.consume("NEWLINE","EOF","RBRACE")
+                node.append(("ReturnNode",value))
+                self.consume("NEWLINE","RBRACE")
             
             elif (self.currentToken[0] == "ID"):
                 funcName = self.consume("ID")
@@ -191,7 +191,7 @@ class Parser():
                     params.append(param)
                     if (not self.currentToken[0] == "RPAREN"):
                         self.consume("COMMA")
-                node.append(["FunctionCallNode",funcName,params])
+                node.append(("FunctionCallNode",funcName,params))
             
             elif (self.currentToken[0] == "AND_GATE"):
                 self.consume("AND_GATE")
@@ -202,7 +202,7 @@ class Parser():
                 self.consume("LT")
 
                 assignVar = self.consume("ID")
-                node.append(["AndGateNode",varName,value,assignVar])
+                node.append(("AndGateNode",varName,value,assignVar))
             
             elif (self.currentToken[0] == "OR_GATE"):
                 self.consume("OR_GATE")
@@ -213,7 +213,7 @@ class Parser():
                 self.consume("LT")
 
                 assignVar = self.consume("ID")
-                node.append(["OrGateNode",varName,value,assignVar])
+                node.append(("OrGateNode",varName,value,assignVar))
             
             elif (self.currentToken[0] == "XOR_GATE"):
                 self.consume("XOR_GATE")
@@ -224,7 +224,7 @@ class Parser():
                 self.consume("LT")
 
                 assignVar = self.consume("ID")
-                node.append(["XorGateNode",varName,value,assignVar])
+                node.append(("XorGateNode",varName,value,assignVar))
             
             elif (self.currentToken[0] == "COMPARE_COMMAND"):
                 self.consume("COMPARE_COMMAND")
@@ -236,7 +236,7 @@ class Parser():
                 self.consume("RPAREN")
                 self.consume("LT")
                 assignVar = self.consume("ID")
-                node.append(["CompareNode",val1,logicOp,val2,assignVar])
+                node.append(("CompareNode",val1,logicOp,val2,assignVar))
             
             elif (self.currentToken[0] == "IF_COMMAND"):
                 self.functionMode = True
@@ -247,7 +247,7 @@ class Parser():
                     ifNode = self.parser()
                 self.consume("RBRACE")
 
-                node.append(["IfNode",result,ifNode])
+                node.append(("IfNode",result,ifNode))
             
             elif (self.currentToken[0] == "ELSE_COMMAND"):
                 self.functionMode = True
@@ -257,7 +257,7 @@ class Parser():
                     elseNode = self.parser()
                 self.consume("RBRACE")
 
-                node.append(["ElseNode",elseNode])
+                node.append(("ElseNode",elseNode))
             else:
                 self.advance()
         return node

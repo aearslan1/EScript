@@ -52,7 +52,7 @@ class Lexer():
             self.advance()
         if (self.currentLetter != '"'):
             self.errorManager.syntaxError("kapatılmamış bir tırnak var.")
-        self.tokens.append(["STRING",stringPack])
+        self.tokens.append(("STRING",stringPack))
 
         self.advance()
     
@@ -74,15 +74,15 @@ class Lexer():
                 self.advance()
         
         if alphaPack in self.basicCommandMap:
-            self.tokens.append([self.basicCommandMap[alphaPack],alphaPack])
+            self.tokens.append((self.basicCommandMap[alphaPack],alphaPack))
         elif alphaPack in self.dataTypes:
-            self.tokens.append(["DTYPE",alphaPack])
+            self.tokens.append(("DTYPE",alphaPack))
         
         elif alphaPack == "doğru" or alphaPack == "yanlış":
-            self.tokens.append(["BOOL",alphaPack])
+            self.tokens.append(("BOOL",alphaPack))
             
         else:
-            self.tokens.append(["ID",alphaPack])
+            self.tokens.append(("ID",alphaPack))
 
     def numberMod(self):
         numberPack = ""
@@ -107,9 +107,9 @@ class Lexer():
                     self.advance()
         
         if isFloat:
-            self.tokens.append(["FLOAT",float(numberPack)])
+            self.tokens.append(("FLOAT",float(numberPack)))
         else:
-            self.tokens.append(["INT",int(numberPack)])
+            self.tokens.append(("INT",int(numberPack)))
            
     def advance(self): #position'u bir kaydıran fonksiyon
         if (self.position + 1 < len(self.text)):
