@@ -23,6 +23,11 @@ class Error():
         self.head()
         print(f"Tip Hatası > {content}")
         sys.exit(1)
+    
+    def divisionByZeroError(self,content: str):
+        self.head()
+        print(f"Sıfıra Bölünme Hatası > {content}")
+        sys.exit(1)
 class Interpreter():
     def __init__(self,node: tuple,text: str):
         self.node = node
@@ -124,6 +129,7 @@ class Interpreter():
             self.variables[varName] = valueList
             return
         self.variables[varName] = ("ValueNode",resolvedVal)
+
         
     def defineFunctionCommand(self):
         funcName = self.currentNode[1]
@@ -133,19 +139,119 @@ class Interpreter():
 
     def addCommand(self):
         varName = self.currentNode[1]
+        
         if varName in self.variables:
             addedVal = self.currentNode[2]
-            resolvedVal = self.resolve(addedVal)
-            resolvedVar = self.resolve(self.variables[varName])
+            varValue = self.variables[varName]
+            if(varValue[0] == "ValueNode"):
+                resolvedVarValue = self.resolve(varValue)
+                resolvedAddedValue = self.resolve(addedVal)
+                result = resolvedVarValue + resolvedAddedValue
+                self.variables[varName] = ("ValueNode",(self.turnToTypeMap[type(result)],result))
+
+        
         else:
             self.errorManager.variableError(f"'{varName[1]}' isimlli bir değişken bulunamadı")
+       
+    def minusCommand(self):
+        varName = self.currentNode[1]
+        
+        if varName in self.variables:
+            addedVal = self.currentNode[2]
+            varValue = self.variables[varName]
+            if(varValue[0] == "ValueNode"):
+                resolvedVarValue = self.resolve(varValue)
+                resolvedAddedValue = self.resolve(addedVal)
+                result = resolvedVarValue - resolvedAddedValue
+                self.variables[varName] = ("ValueNode",(self.turnToTypeMap[type(result)],result))
+
+        
+        else:
+            self.errorManager.variableError(f"'{varName[1]}' isimlli bir değişken bulunamadı")
+    
+    def multCommand(self):
+        varName = self.currentNode[1]
+        
+        if varName in self.variables:
+            addedVal = self.currentNode[2]
+            varValue = self.variables[varName]
+            if(varValue[0] == "ValueNode"):
+                resolvedVarValue = self.resolve(varValue)
+                resolvedAddedValue = self.resolve(addedVal)
+                result = resolvedVarValue * resolvedAddedValue
+                self.variables[varName] = ("ValueNode",(self.turnToTypeMap[type(result)],result))
+
+        
+        else:
+            self.errorManager.variableError(f"'{varName[1]}' isimlli bir değişken bulunamadı")
+    
+    def divCommand(self):
+        varName = self.currentNode[1]
+        
+        if varName in self.variables:
+            addedVal = self.currentNode[2]
+            varValue = self.variables[varName]
+            if(varValue[0] == "ValueNode"):
+                resolvedVarValue = self.resolve(varValue)
+                resolvedAddedValue = self.resolve(addedVal)
+                if (resolvedAddedValue == 0):
+                    self.errorManager.divisionByZeroError("herhangi bir sayı '0'a  bölünemez")
+                result = resolvedVarValue / resolvedAddedValue
+                varResult = ("ValueNode",(self.turnToTypeMap[type(result)],result))
+                if (result.is_integer()):
+                    varResult = ("ValueNode",("INT",int(result)))
+                self.variables[varName] = varResult
+                
+        
+        else:
+            self.errorManager.variableError(f"'{varName[1]}' isimlli bir değişken bulunamadı")
+    
+    def compareCommand(self):
+        valValue1 = self.resolve(self.currentNode[1])
+        valValue2 = self.resolve(self.currentNode[3])
+        logicOp = self.currentNode[2]
         try:
-            result = resolvedVal + resolvedVar
+            if (logicOp[0] == "EQ"):
+                if (valValue1 == valValue2):
+                    result = ("ValueNode",("BOOL","doğru"))
+                else:
+                    result = ("ValueNode",("BOOL","yanlış"))
+            
+            elif (logicOp[0] == "LT"):
+                if (valValue1 < valValue2):
+                    result = ("ValueNode",("BOOL","doğru"))
+                else:
+                    result = ("ValueNode",("BOOL","yanlış"))
+        
+            elif (logicOp[0] == "GT"):
+                if (valValue1 > valValue2):
+                    result = ("ValueNode",("BOOL","doğru"))
+                else:
+                    result = ("ValueNode",("BOOL","yanlış"))
+            
+            elif (logicOp[0] == "LE"):
+                if (valValue1 <= valValue2):
+                    result = ("ValueNode",("BOOL","doğru"))
+                else:
+                    result = ("ValueNode",("BOOL","yanlış"))
+            
+            elif (logicOp[0] == "GE"):
+                if (valValue1 >= valValue2):
+                    result = ("ValueNode",("BOOL","doğru"))
+                else:
+                    result = ("ValueNode",("BOOL","yanlış"))
+            
+            elif (logicOp[0] == "NEQ"):
+                if (valValue1 != valValue2):
+                    result = ("ValueNode",("BOOL","doğru"))
+                else:
+                    result = ("ValueNode",("BOOL","yanlış"))
         except TypeError:
-            self.errorManager.typeError(f"({self.turnToTypeMap[type(resolvedVar)]}) tipi ile ({self.turnToTypeMap[type(resolvedVal)]}) toplanamaz")
+            self.errorManager.typeError(f"({self.turnToTypeMap[type(valValue1)]}) ile ({self.turnToTypeMap[type(valValue2)]}) tipleri birbiri ile karşılaştırılamaz")
         
-        print(self.variables[varName])
-        
+        self.variables[self.currentNode[4]] = result
+   
+    
     def interpreter(self):
         while (self.currentNode != None):
             if (self.currentNode[0] == "PrintNode"):
@@ -159,7 +265,18 @@ class Interpreter():
 
             elif (self.currentNode[0] == "AddNode"):
                 self.addCommand()
+            
+            elif (self.currentNode[0] == "MinusNode"):
+                self.minusCommand()
+            
+            elif (self.currentNode[0] == "MultNode"):
+                self.multCommand()
 
+            elif (self.currentNode[0] == "DivNode"):
+                self.divCommand()
+
+            elif (self.currentNode[0] == "CompareNode"):
+                self.compareCommand()
             self.advance()
 
 if __name__ == "__main__":
