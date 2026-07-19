@@ -196,7 +196,7 @@ class Parser():
             elif (self.currentToken[0] == "AND_GATE"):
                 self.consume("AND_GATE")
                 self.consume("LT")
-                varName = self.consume("ID")
+                varName = self.consume("ID","BOOL")
                 self.consume("COMMA")
                 value = self.valueNode()
                 self.consume("LT")
@@ -207,7 +207,7 @@ class Parser():
             elif (self.currentToken[0] == "OR_GATE"):
                 self.consume("OR_GATE")
                 self.consume("LT")
-                varName = self.consume("ID")
+                varName = self.consume("ID","BOOL")
                 self.consume("COMMA")
                 value = self.valueNode()
                 self.consume("LT")
@@ -218,7 +218,7 @@ class Parser():
             elif (self.currentToken[0] == "XOR_GATE"):
                 self.consume("XOR_GATE")
                 self.consume("LT")
-                varName = self.consume("ID")
+                varName = self.consume("ID","BOOL")
                 self.consume("COMMA")
                 value = self.valueNode()
                 self.consume("LT")
