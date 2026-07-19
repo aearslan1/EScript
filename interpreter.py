@@ -14,24 +14,29 @@ class Error():
         print(f"Yazım Hatası > {content}")
         sys.exit(1)
     
-    def variableError(self,content:str):
+    def variableError(self,content: str):
         self.head()
         print(f"Değişken Hatası > {content}")
         sys.exit(1)
-
+    
+    def typeError(self,content: str):
+        self.head()
+        print(f"Tip Hatası > {content}")
+        sys.exit(1)
 class Interpreter():
     def __init__(self,node: tuple,text: str):
         self.node = node
         if self.node:
             self.position = 0
             self.currentNode = self.node[self.position]
-            self.variables =self.variables = {
-        ("ID", "x"): ("ValueNode", ("ID", "y")),
-        ("ID", "y"): ("ValueNode", ("STRING", "Merh"))
-    }
+            self.variables =self.variables = {}
             self.functions = {}
             self.builtInFunctions = {}
             self.errorManager = Error(text)
+            self.turnToTypeMap = {int : "INT",
+                                  float : "FLOAT",
+                                  bool : "BOOL",
+                                  str : "STRING"}
         else:
             self.currentNode = None
         
@@ -73,7 +78,8 @@ class Interpreter():
             else:
                 print(valNode)
         
-
+        
+        
     def printCommand(self):
         valueNodes = self.currentNode[1]
         willPrint = ""
@@ -84,22 +90,62 @@ class Interpreter():
         print(willPrint,end=endParam)
         
     def assignCommand(self):
+        
         dataType = self.currentNode[1][1]
         varName = self.currentNode[2]
         valueList = self.currentNode[3]
-        valueDtype = valueList[0]
-
+        resolvedVal = self.resolve(valueList)
+        
         if (dataType == "tamsayı"):
-            realDataType = int     
-        elif (dataType == "metin"):
-            realDataType = str   
+            try:
+                resolvedVal = ("INT",int(resolvedVal))
+            except ValueError:
+                self.errorManager.typeError(f"değer 'tamsayı' tipine dönüştürülemiyor.")
+
         elif (dataType == "ondalık"):
-            realDataType = float  
+            try:
+                resolvedVal = ("FLOAT",float(resolvedVal))
+            except ValueError:
+                self.errorManager.typeError(f"değer 'ondalık' tipine dönüştürülemiyor") 
+        
+        elif (dataType == "metin"):
+            try:
+                resolvedVal = ("STRING",str(resolvedVal))
+            except ValueError:
+                self.errorManager.typeError(f"değer 'metin' tipine dönüştürülemiyor") 
+        
         elif (dataType == "mantıksal"):
-            realDataType = bool
+            try:
+                resolvedVal = ("BOOL",bool(resolvedVal))
+            except ValueError:
+                self.errorManager.typeError(f"değer 'mantıksal' tipine dönüştürülemiyor") 
 
-    
+        elif (dataType == "liste"):
+            self.variables[varName] = valueList
+            return
+        self.variables[varName] = ("ValueNode",resolvedVal)
+        
+    def defineFunctionCommand(self):
+        funcName = self.currentNode[1]
+        params = self.currentNode[2]
+        body = self.currentNode[3]
+        self.functions[funcName] = {"params": params, "body": body}
 
+    def addCommand(self):
+        varName = self.currentNode[1]
+        if varName in self.variables:
+            addedVal = self.currentNode[2]
+            resolvedVal = self.resolve(addedVal)
+            resolvedVar = self.resolve(self.variables[varName])
+        else:
+            self.errorManager.variableError(f"'{varName[1]}' isimlli bir değişken bulunamadı")
+        try:
+            result = resolvedVal + resolvedVar
+        except TypeError:
+            self.errorManager.typeError(f"({self.turnToTypeMap[type(resolvedVar)]}) tipi ile ({self.turnToTypeMap[type(resolvedVal)]}) toplanamaz")
+        
+        print(self.variables[varName])
+        
     def interpreter(self):
         while (self.currentNode != None):
             if (self.currentNode[0] == "PrintNode"):
@@ -107,6 +153,12 @@ class Interpreter():
             
             elif (self.currentNode[0] == "AssignNode"):
                 self.assignCommand()
+
+            elif (self.currentNode[0] == "FunctionDefineNode"):
+                self.defineFunctionCommand()
+
+            elif (self.currentNode[0] == "AddNode"):
+                self.addCommand()
 
             self.advance()
 
