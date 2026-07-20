@@ -230,10 +230,7 @@ class Parser():
                 self.consume("NOT_GATE")
                 self.consume("LT")
                 varName = self.valueNode()
-                self.consume("COMMA")
-                value = self.valueNode()
                 self.consume("LT")
-
                 assignVar = self.consume("ID")
                 node.append(("NotGateNode",varName,value,assignVar))
             
