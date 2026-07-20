@@ -32,6 +32,7 @@ class Interpreter():
     def __init__(self,node: tuple,text: str):
         self.node = node
         if self.node:
+            self.text = text
             self.position = 0
             self.currentNode = self.node[self.position]
             self.variables =self.variables = {}
@@ -121,7 +122,12 @@ class Interpreter():
         
         elif (dataType == "mantıksal"):
             try:
-                resolvedVal = ("BOOL",bool(resolvedVal))
+                result = bool(resolvedVal)
+                if (result == True):
+                    rresult = "doğru"
+                else:
+                    rresult = "yanlış"
+                resolvedVal = ("BOOL",rresult)
             except ValueError:
                 self.errorManager.typeError(f"değer 'mantıksal' tipine dönüştürülemiyor") 
 
@@ -129,8 +135,7 @@ class Interpreter():
             self.variables[varName] = valueList
             return
         self.variables[varName] = ("ValueNode",resolvedVal)
-
-        
+  
     def defineFunctionCommand(self):
         funcName = self.currentNode[1]
         params = self.currentNode[2]
@@ -251,7 +256,59 @@ class Interpreter():
         
         self.variables[self.currentNode[4]] = result
    
+    def andGateCommand(self):
+        valValue1 = self.resolve(self.currentNode[1])
+        valValue2 = self.resolve(self.currentNode[2])
+        assignVar = self.currentNode[3]
+        if (valValue1 == "doğru" and valValue2 == "doğru"):
+            result = "doğru"
+        else:
+            result = "yanlış"
+
+
+        self.variables[assignVar] = ("ValueNode",("BOOL",result))
     
+    def orGateCommand(self):
+        valValue1 = self.resolve(self.currentNode[1])
+        valValue2 = self.resolve(self.currentNode[2])
+        assignVar = self.currentNode[3]
+        if (valValue1 == "doğru" or valValue2 == "doğru"):
+            result = "doğru"
+        else:
+            result = "yanlış"
+
+
+        self.variables[assignVar] = ("ValueNode",("BOOL",result))
+    
+    def xorGateCommand(self):
+        valValue1 = self.resolve(self.currentNode[1])
+        valValue2 = self.resolve(self.currentNode[2])
+        assignVar = self.currentNode[3]
+        
+        if ((valValue1 == "doğru" and valValue2 == "yanlış") or (valValue1 == "yanlış" and valValue2 == "doğru")):
+            result = "doğru"
+        else:
+            result = "yanlış"
+
+        self.variables[assignVar] = ("ValueNode",("BOOL",result))
+    
+    def notGateCommand(self):
+        value = self.resolve(self.currentNode[1])
+        assignVar = self.currentNode[2]
+
+        if (value == "doğru"):
+            result = "yanlış"
+        else:
+            result = "doğru"
+
+        self.variables[assignVar] = ("ValueNode",("BOOL",result))
+
+    def ifCommand(self):
+        valueResult = self.resolve(self.currentNode[1])
+
+        if (valueResult == "doğru"):
+            ifInterpreter = Interpreter(self.currentNode[2],self.text).interpreter()
+
     def interpreter(self):
         while (self.currentNode != None):
             if (self.currentNode[0] == "PrintNode"):
@@ -277,6 +334,21 @@ class Interpreter():
 
             elif (self.currentNode[0] == "CompareNode"):
                 self.compareCommand()
+            
+            elif (self.currentNode[0] == "AndGateNode"):
+                self.andGateCommand()
+            
+            elif (self.currentNode[0] == "OrGateNode"):
+                self.orGateCommand()
+            
+            elif (self.currentNode[0] == "XorGateNode"):
+                self.xorGateCommand()
+            
+            elif (self.currentNode[0] == "NotGateNode"):
+                self.notGateCommand()
+            
+            elif (self.currentNode[0] == "IfNode"):
+                self.ifCommand()
             self.advance()
 
 if __name__ == "__main__":
