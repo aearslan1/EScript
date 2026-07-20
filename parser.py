@@ -232,7 +232,7 @@ class Parser():
                 varName = self.valueNode()
                 self.consume("LT")
                 assignVar = self.consume("ID")
-                node.append(("NotGateNode",varName,value,assignVar))
+                node.append(("NotGateNode",varName,assignVar))
             
             elif (self.currentToken[0] == "COMPARE_COMMAND"):
                 self.consume("COMPARE_COMMAND")
