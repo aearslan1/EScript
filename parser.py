@@ -196,7 +196,7 @@ class Parser():
             elif (self.currentToken[0] == "AND_GATE"):
                 self.consume("AND_GATE")
                 self.consume("LT")
-                varName = self.consume("ID","BOOL")
+                varName = self.valueNode()
                 self.consume("COMMA")
                 value = self.valueNode()
                 self.consume("LT")
@@ -207,7 +207,7 @@ class Parser():
             elif (self.currentToken[0] == "OR_GATE"):
                 self.consume("OR_GATE")
                 self.consume("LT")
-                varName = self.consume("ID","BOOL")
+                varName = self.valueNode()
                 self.consume("COMMA")
                 value = self.valueNode()
                 self.consume("LT")
@@ -218,13 +218,24 @@ class Parser():
             elif (self.currentToken[0] == "XOR_GATE"):
                 self.consume("XOR_GATE")
                 self.consume("LT")
-                varName = self.consume("ID","BOOL")
+                varName = self.valueNode()
                 self.consume("COMMA")
                 value = self.valueNode()
                 self.consume("LT")
 
                 assignVar = self.consume("ID")
                 node.append(("XorGateNode",varName,value,assignVar))
+            
+            elif (self.currentToken[0] == "NOT_GATE"):
+                self.consume("NOT_GATE")
+                self.consume("LT")
+                varName = self.valueNode()
+                self.consume("COMMA")
+                value = self.valueNode()
+                self.consume("LT")
+
+                assignVar = self.consume("ID")
+                node.append(("NotGateNode",varName,value,assignVar))
             
             elif (self.currentToken[0] == "COMPARE_COMMAND"):
                 self.consume("COMPARE_COMMAND")
