@@ -76,8 +76,6 @@ class Interpreter():
             else:
                 print(valNode)
         
-        
-        
     def printCommand(self):
         valueNodes = self.currentNode[1]
         willPrint = ""
@@ -129,7 +127,6 @@ class Interpreter():
                 self.errorManager.typeError(f"değer 'bool' tipine dönüştürülemiyor") 
             resolvedVal = ("BOOL",rresult)
   
-
         elif (dataType == "liste"):
             self.variables[varName] = valueList
             return
@@ -150,9 +147,14 @@ class Interpreter():
             if(varValue[0] == "ValueNode"):
                 resolvedVarValue = self.resolve(varValue)
                 resolvedAddedValue = self.resolve(addedVal)
-                result = resolvedVarValue + resolvedAddedValue
+                try:
+                    result = resolvedVarValue + resolvedAddedValue
+                except TypeError:
+                    self.errorManager.typeError("bu iki değer birbiri ile toplanamaz")
                 self.variables[varName] = ("ValueNode",(self.turnToTypeMap[type(result)],result))
 
+            elif (varValue[0] == "ListNode"):
+                pass
         
         else:
             self.errorManager.variableError(f"'{varName[1]}' isimlli bir değişken bulunamadı")
@@ -166,7 +168,10 @@ class Interpreter():
             if(varValue[0] == "ValueNode"):
                 resolvedVarValue = self.resolve(varValue)
                 resolvedAddedValue = self.resolve(addedVal)
-                result = resolvedVarValue - resolvedAddedValue
+                try:
+                    result = resolvedVarValue - resolvedAddedValue
+                except TypeError:
+                    self.errorManager.typeError("bu iki değer birbiri ile çıkarılamaz")
                 self.variables[varName] = ("ValueNode",(self.turnToTypeMap[type(result)],result))
 
         
@@ -182,7 +187,10 @@ class Interpreter():
             if(varValue[0] == "ValueNode"):
                 resolvedVarValue = self.resolve(varValue)
                 resolvedAddedValue = self.resolve(addedVal)
-                result = resolvedVarValue * resolvedAddedValue
+                try:
+                    result = resolvedVarValue * resolvedAddedValue
+                except TypeError:
+                    self.errorManager.typeError("bu iki değer birbiri ile çarpılamaz")
                 self.variables[varName] = ("ValueNode",(self.turnToTypeMap[type(result)],result))
 
         
@@ -200,7 +208,11 @@ class Interpreter():
                 resolvedAddedValue = self.resolve(addedVal)
                 if (resolvedAddedValue == 0):
                     self.errorManager.divisionByZeroError("herhangi bir sayı '0'a  bölünemez")
-                result = resolvedVarValue / resolvedAddedValue
+                
+                try:
+                    result = resolvedVarValue / resolvedAddedValue
+                except TypeError:
+                    self.errorManager.typeError("bu iki değer birbiri ile bölünemez")
                 varResult = ("ValueNode",(self.turnToTypeMap[type(result)],result))
                 if (result.is_integer()):
                     varResult = ("ValueNode",("INT",int(result)))
@@ -210,6 +222,30 @@ class Interpreter():
         else:
             self.errorManager.variableError(f"'{varName[1]}' isimlli bir değişken bulunamadı")
     
+    def modCommand(self):
+        varName = self.currentNode[1]
+        
+        if varName in self.variables:
+            addedVal = self.currentNode[2]
+            varValue = self.variables[varName]
+            if(varValue[0] == "ValueNode"):
+                resolvedVarValue = self.resolve(varValue)
+                resolvedAddedValue = self.resolve(addedVal)
+                if (resolvedAddedValue == 0):
+                    self.errorManager.divisionByZeroError("herhangi bir sayı '0'a  bölünemez")
+                
+                try:
+                    result = resolvedVarValue % resolvedAddedValue
+                except TypeError:
+                    self.errorManager.typeError("bu iki değer birbiri ile bölünemez")
+                varResult = ("ValueNode",(self.turnToTypeMap[type(result)],result))
+                if (result.is_integer()):
+                    varResult = ("ValueNode",("INT",int(result)))
+                self.variables[varName] = varResult
+                
+        
+        else:
+            self.errorManager.variableError(f"'{varName[1]}' isimlli bir değişken bulunamadı")
     def compareCommand(self):
         valValue1 = self.resolve(self.currentNode[1])
         valValue2 = self.resolve(self.currentNode[3])
@@ -307,11 +343,23 @@ class Interpreter():
         ifBody = self.currentNode[2]
         elseBody = self.currentNode[3]
         if (valueResult == "doğru"):
-            self.interpreter(ifBody)
+            result = self.interpreter(ifBody)
+            if(result == "BreakLoop"):
+                return "BreakLoop"
         elif (not elseBody is None):
-            self.interpreter(elseBody)
+            result = self.interpreter(elseBody)
+            if(result == "BreakLoop"):
+                return "BreakLoop"
 
+    def loopCommand(self):
+        count = self.resolve(self.currentNode[1])
+        loopBody = self.currentNode[2]
 
+        for _ in range(count):
+            result = self.interpreter(loopBody)
+            if (result == "BreakLoop"):
+                break
+    
     def inputCommand(self):
         dataType = self.currentNode[1][1]
         varName = self.currentNode[2]
@@ -345,6 +393,7 @@ class Interpreter():
             resolvedVal = ("BOOL",rresult)
 
         self.variables[varName] = ("ValueNode",resolvedVal)
+    
     def interpreter(self,nodes: tuple):
         if not nodes:
             return
@@ -367,6 +416,8 @@ class Interpreter():
                 self.multCommand()
             elif nodeType == "DivNode":
                 self.divCommand()
+            elif nodeType == "ModNode":
+                self.modCommand()
             elif nodeType == "CompareNode":
                 self.compareCommand()
             elif nodeType == "AndGateNode":
@@ -378,9 +429,16 @@ class Interpreter():
             elif nodeType == "NotGateNode":
                 self.notGateCommand()
             elif nodeType == "IfNode":
-                self.ifCommand()
+                result = self.ifCommand()
+                if (result == "BreakLoop"):
+                    return "BreakLoop"
             elif nodeType == "InputNode":
                 self.inputCommand()
+            elif nodeType == "LoopNode":
+                self.loopCommand()
+            elif nodeType == "BreakNode":
+                return "BreakLoop"
+            
             else:
                 self.errorManager.syntaxError(f"'{self.currentNode}' bilinmeyen komut.")
 if __name__ == "__main__":
