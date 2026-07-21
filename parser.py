@@ -76,6 +76,7 @@ class Parser():
         while(self.currentToken[0] != "EOF"):
             if (self.functionMode and self.currentToken[0] == "RBRACE"):
                 break
+            
             if (self.currentToken[0] == "PRINT_COMMAND"):
                 self.consume("PRINT_COMMAND")
                 willPrintValues = []
@@ -95,6 +96,7 @@ class Parser():
                 
                     
                 node.append(("PrintNode",willPrintValues,end))
+           
             elif (self.currentToken[0] == "ASSIGN_COMMAND"):
                 self.consume("ASSIGN_COMMAND")
                 willPrintValues = []
@@ -126,7 +128,6 @@ class Parser():
                 value = self.valueNode()
                 node.append(("AddNode",varName,value))
 
-
             elif (self.currentToken[0] == "MINUS_COMMAND"):
                 self.consume("MINUS_COMMAND")
                 willPrintValues = []
@@ -153,6 +154,15 @@ class Parser():
                 self.consume("COMMA")
                 value = self.valueNode()
                 node.append(("DivNode",varName,value))
+            
+            elif (self.currentToken[0] == "MOD_COMMAND"):
+                self.consume("MOD_COMMAND")
+                willPrintValues = []
+                self.consume("LT")
+                varName = self.consume("ID")
+                self.consume("COMMA")
+                value = self.valueNode()
+                node.append(("ModNode",varName,value))
 
             elif (self.currentToken[0] == "FUNCTIONDEFINE_COMMAND"):
                 self.functionMode = True
@@ -267,7 +277,7 @@ class Parser():
                         elseBody.extend(self.parser())
                     self.consume("RBRACE")
                 node.append(("IfNode",result,ifBody,elseBody))
-                self.functionMode = False
+            
             elif (self.currentToken[0] == "INPUT_COMMAND"):
                 self.consume("INPUT_COMMAND")
                 self.consume("LT")
@@ -275,6 +285,21 @@ class Parser():
                 self.consume("LT") 
                 varName = self.consume("ID")
                 node.append(("InputNode",dtype,varName))
+            
+            elif (self.currentToken[0] == "LOOP_COMMAND"):
+                self.functionMode = True
+                self.consume("LOOP_COMMAND")
+                loopAmount = self.valueNode()
+                loopBody = []
+                self.consume("LBRACE")
+                while (self.currentToken[0] != "EOF" and self.currentToken[0] != "RBRACE"):
+                    loopBody.extend(self.parser())
+                self.consume("RBRACE")
+                node.append(("LoopNode",loopAmount,loopBody))
+            
+            elif (self.currentToken[0] == "BREAK_COMMAND"):
+                self.consume("BREAK_COMMAND")
+                node.append(["BreakNode"])
             else:
                 self.advance()
         return node
