@@ -22,7 +22,7 @@ class Lexer():
         
             self.errorManager = Error(self.text)
             self.dataTypes = ["tamsayı","ondalık","metin","mantıksal","liste"]
-            self.basicCommandMap = {"yaz":"PRINT_COMMAND","yap":"ASSIGN_COMMAND","ekle":"ADD_COMMAND","fnk":"FUNCTIONDEFINE_COMMAND","çıkar":"MINUS_COMMAND","çarp":"MULT_COMMAND","böl":"DIV_COMMAND","eğer" : "IF_COMMAND","değilse":"ELSE_COMMAND","krş" : "COMPARE_COMMAND" ,"döndür":"RETURN_COMMAND","and":"AND_GATE","or":"OR_GATE","xor":"XOR_GATE","not":"NOT_GATE","giriş" : "INPUT_COMMAND"}
+            self.basicCommandMap = {"yaz":"PRINT_COMMAND","yap":"ASSIGN_COMMAND","ekle":"ADD_COMMAND","fnk":"FUNCTIONDEFINE_COMMAND","çıkar":"MINUS_COMMAND","çarp":"MULT_COMMAND","böl":"DIV_COMMAND","mod":"MOD_COMMAND","eğer" : "IF_COMMAND","değilse":"ELSE_COMMAND","krş" : "COMPARE_COMMAND" ,"döndür":"RETURN_COMMAND","and":"AND_GATE","or":"OR_GATE","xor":"XOR_GATE","not":"NOT_GATE","giriş" : "INPUT_COMMAND","döngü":"LOOP_COMMAND","kır" : "BREAK_COMMAND"}
             self.outlierAlphaValues = ["_"]
             self.usefulSigns = {"+":"PLUS","-":"MINUS","*":"STAR","/":"SLASH","(":"LPAREN",")":"RPAREN","[":"LBRACKET","]":"RBRACKET","{":"LBRACE","}":"RBRACE","\n":"NEWLINE",".":"DOT",",":"COMMA",";":"SEMICOLON",":":"COLON"}
             self.advanceSigns = [" ", "\t", "\r"]
