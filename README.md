@@ -54,20 +54,19 @@ Here is a quick look at how EScript looks in action:
 
 ```text
 # Variable declaration
-yap tamsayı counter = 10
-yaz "Current value: " counter "\n"
+yap < tamsayı < counter = 10
+yaz < "Current value: ", counter < "\n"
 
 # Comparison and conditional check
-yap mantıksal is_greater
-krş counter > 5 -> is_greater
+krş < (counter > 5) < is_greater
 
 eğer is_greater {
-    yaz "The number is greater than 5!" "\n"
+    yaz < "The number is greater than 5!" < "\n"
 } değilse {
-    yaz "The number is 5 or smaller." "\n"
+    yaz < "The number is 5 or smaller." < "\n"
 }
 
 # Simple loop
 döngü 3 {
-    yaz "EScript is running fine..." "\n"
+    yaz < "EScript is running fine..." < "\n"
 }
