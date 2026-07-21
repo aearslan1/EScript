@@ -29,32 +29,24 @@ class Error():
         print(f"Sıfıra Bölünme Hatası > {content}")
         sys.exit(1)
 class Interpreter():
-    def __init__(self,node: tuple,text: str):
-        self.node = node
-        if self.node:
-            self.text = text
-            self.position = 0
-            self.currentNode = self.node[self.position]
-            self.variables =self.variables = {}
-            self.functions = {}
-            self.builtInFunctions = {}
-            self.errorManager = Error(text)
-            self.turnToTypeMap = {int : "INT",
+    def __init__(self,text: str):
+        self.node = ()
+        self.text = text
+        self.position = 0
+        self.currentNode = ()
+        self.variables =self.variables = {}
+        self.functions = {}
+        self.builtInFunctions = {}
+        self.errorManager = Error(text)
+        self.turnToTypeMap = {int : "INT",
                                   float : "FLOAT",
                                   bool : "BOOL",
                                   str : "STRING"}
-        else:
-            self.currentNode = None
-        
-    
-    def advance(self):
-        if (self.position + 1 < len(self.node)):
-            self.position += 1
-            self.currentNode = self.node[self.position]
-        else:
-            self.currentNode = None
+
     def resolve(self,valNode: tuple):
+
         valNodeType = valNode[0]
+        
         
         if (valNodeType == "ListNode"):
             valList = []
@@ -100,7 +92,14 @@ class Interpreter():
         dataType = self.currentNode[1][1]
         varName = self.currentNode[2]
         valueList = self.currentNode[3]
-        resolvedVal = self.resolve(valueList)
+        if (valueList[1] is None):
+            if (varName in self.variables):
+                varValue = self.variables[varName]
+                resolvedVal = self.resolve(varValue)
+            else:
+                self.errorManager.variableError(f"'{varName}' adında bir değişken bulunamadı")
+        else:
+            resolvedVal = self.resolve(valueList)
         
         if (dataType == "tamsayı"):
             try:
@@ -120,16 +119,16 @@ class Interpreter():
             except ValueError:
                 self.errorManager.typeError(f"değer 'metin' tipine dönüştürülemiyor") 
         
-        elif (dataType == "mantıksal"):
-            try:
-                result = bool(resolvedVal)
-                if (result == True):
-                    rresult = "doğru"
-                else:
-                    rresult = "yanlış"
-                resolvedVal = ("BOOL",rresult)
-            except ValueError:
-                self.errorManager.typeError(f"değer 'mantıksal' tipine dönüştürülemiyor") 
+        elif (dataType == "mantıksal"):            
+            if (resolvedVal == "doğru" or resolvedVal == 1):
+                rresult = "doğru"
+            elif (resolvedVal == "yanlış" or resolvedVal == 0):
+                rresult = "yanlış"
+            
+            else:
+                self.errorManager.typeError(f"değer 'bool' tipine dönüştürülemiyor") 
+            resolvedVal = ("BOOL",rresult)
+  
 
         elif (dataType == "liste"):
             self.variables[varName] = valueList
@@ -305,56 +304,89 @@ class Interpreter():
 
     def ifCommand(self):
         valueResult = self.resolve(self.currentNode[1])
-
+        ifBody = self.currentNode[2]
+        elseBody = self.currentNode[3]
         if (valueResult == "doğru"):
-            ifInterpreter = Interpreter(self.currentNode[2],self.text).interpreter()
+            self.interpreter(ifBody)
+        elif (not elseBody is None):
+            self.interpreter(elseBody)
 
-    def interpreter(self):
-        while (self.currentNode != None):
-            if (self.currentNode[0] == "PrintNode"):
+
+    def inputCommand(self):
+        dataType = self.currentNode[1][1]
+        varName = self.currentNode[2]
+        resolvedVal = input()
+        if (dataType == "tamsayı"):
+            try:
+                resolvedVal = ("INT",int(resolvedVal))
+            except ValueError:
+                self.errorManager.typeError(f"değer 'tamsayı' tipine dönüştürülemiyor.")
+
+        elif (dataType == "ondalık"):
+            try:
+                resolvedVal = ("FLOAT",float(resolvedVal))
+            except ValueError:
+                self.errorManager.typeError(f"değer 'ondalık' tipine dönüştürülemiyor") 
+        
+        elif (dataType == "metin"):
+            try:
+                resolvedVal = ("STRING",str(resolvedVal))
+            except ValueError:
+                self.errorManager.typeError(f"değer 'metin' tipine dönüştürülemiyor") 
+        
+        elif (dataType == "mantıksal"): 
+            if (resolvedVal == "doğru" or resolvedVal == 1):
+                rresult = "doğru"
+            elif (resolvedVal == "yanlış" or resolvedVal == 0):
+                rresult = "yanlış"
+            
+            else:
+                self.errorManager.typeError(f"değer 'bool' tipine dönüştürülemiyor") 
+            resolvedVal = ("BOOL",rresult)
+
+        self.variables[varName] = ("ValueNode",resolvedVal)
+    def interpreter(self,nodes: tuple):
+        if not nodes:
+            return
+
+        for node in nodes:
+            self.currentNode = node
+            nodeType = self.currentNode[0]
+
+            if nodeType == "PrintNode":
                 self.printCommand()
-            
-            elif (self.currentNode[0] == "AssignNode"):
+            elif nodeType == "AssignNode":
                 self.assignCommand()
-
-            elif (self.currentNode[0] == "FunctionDefineNode"):
+            elif nodeType == "FunctionDefineNode":
                 self.defineFunctionCommand()
-
-            elif (self.currentNode[0] == "AddNode"):
+            elif nodeType == "AddNode":
                 self.addCommand()
-            
-            elif (self.currentNode[0] == "MinusNode"):
+            elif nodeType == "MinusNode":
                 self.minusCommand()
-            
-            elif (self.currentNode[0] == "MultNode"):
+            elif nodeType == "MultNode":
                 self.multCommand()
-
-            elif (self.currentNode[0] == "DivNode"):
+            elif nodeType == "DivNode":
                 self.divCommand()
-
-            elif (self.currentNode[0] == "CompareNode"):
+            elif nodeType == "CompareNode":
                 self.compareCommand()
-            
-            elif (self.currentNode[0] == "AndGateNode"):
+            elif nodeType == "AndGateNode":
                 self.andGateCommand()
-            
-            elif (self.currentNode[0] == "OrGateNode"):
+            elif nodeType == "OrGateNode":
                 self.orGateCommand()
-            
-            elif (self.currentNode[0] == "XorGateNode"):
+            elif nodeType == "XorGateNode":
                 self.xorGateCommand()
-            
-            elif (self.currentNode[0] == "NotGateNode"):
+            elif nodeType == "NotGateNode":
                 self.notGateCommand()
-            
-            elif (self.currentNode[0] == "IfNode"):
+            elif nodeType == "IfNode":
                 self.ifCommand()
-            self.advance()
-
+            elif nodeType == "InputNode":
+                self.inputCommand()
+            else:
+                self.errorManager.syntaxError(f"'{self.currentNode}' bilinmeyen komut.")
 if __name__ == "__main__":
     with open("testNotepad.txt","r",encoding="utf-8") as file:
         content = file.readlines()
         content = "".join(content)
 
     eparser = Parser(content,Lexer(content).lexer()).parser()
-    einterpreter = Interpreter(eparser,content).interpreter()
+    einterpreter = Interpreter(content).interpreter(eparser)
