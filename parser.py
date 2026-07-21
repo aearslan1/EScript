@@ -21,7 +21,6 @@ class Parser():
         self.currentToken = self.tokens[self.position]
         self.errorManager = Error(text) 
         self.endTokens = ["RBRACE","NEWLINE","EOF"]
-        self.freeValues = {"tamsayı":("INT",0),"mantıksal":("BOOL","doğru"),"ondalık":("BOOL","0.0"),"metin":("STRING",""),"liste":("LIST","[]")}
     def valueNode(self):
         if (self.currentToken[0] == "LBRACKET"):
             self.consume("LBRACKET")
@@ -108,7 +107,7 @@ class Parser():
                     self.consume("ASSIGN")
                     value = self.valueNode()
                 else:
-                    value = self.freeValues[dtype[1]]
+                    value = ("ValueNode",None)
 
                 if (self.functionMode):
                     if (not self.currentToken[0] in self.endTokens):
@@ -251,21 +250,31 @@ class Parser():
                 self.consume("IF_COMMAND")
                 result = self.valueNode()
                 self.consume("LBRACE")
+                ifBody = []
                 while (self.currentToken[0] != "EOF" and self.currentToken[0] != "RBRACE"):
-                    ifNode = self.parser()
+                    ifBody.extend(self.parser())
+                
                 self.consume("RBRACE")
 
-                node.append(("IfNode",result,ifNode))
-            
-            elif (self.currentToken[0] == "ELSE_COMMAND"):
-                self.functionMode = True
-                self.consume("ELSE_COMMAND")
-                self.consume("LBRACE")
-                while (self.currentToken[0] != "EOF" and self.currentToken[0] != "RBRACE"):
-                    elseNode = self.parser()
-                self.consume("RBRACE")
-
-                node.append(("ElseNode",elseNode))
+                while (self.currentToken and self.currentToken[0] == "NEWLINE"):
+                    self.advance()
+                elseBody = None
+                if (self.currentToken[0] == "ELSE_COMMAND"):
+                    self.consume("ELSE_COMMAND")
+                    self.consume("LBRACE")
+                    elseBody = []
+                    while (self.currentToken[0] != "EOF" and self.currentToken[0] != "RBRACE"):
+                        elseBody.extend(self.parser())
+                    self.consume("RBRACE")
+                node.append(("IfNode",result,ifBody,elseBody))
+                self.functionMode = False
+            elif (self.currentToken[0] == "INPUT_COMMAND"):
+                self.consume("INPUT_COMMAND")
+                self.consume("LT")
+                dtype = self.consume("DTYPE")
+                self.consume("LT") 
+                varName = self.consume("ID")
+                node.append(("InputNode",dtype,varName))
             else:
                 self.advance()
         return node
