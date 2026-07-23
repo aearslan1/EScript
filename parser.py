@@ -17,6 +17,8 @@ class Parser():
     def __init__(self,text: str,tokens: list):
         self.tokens = tokens
         self.functionMode = False
+        self.ifMode = False
+        self.loopMode = False
         self.position = 0
         self.currentToken = self.tokens[self.position]
         self.errorManager = Error(text) 
@@ -25,15 +27,15 @@ class Parser():
         if (self.currentToken[0] == "LBRACKET"):
             self.consume("LBRACKET")
             values = []
+        
             while (not self.currentToken[0] in self.endTokens and self.currentToken[0] != "RBRACKET"):
                 value = self.valueNode()
                 values.append(value)
                 if (not self.currentToken[0] == "RBRACKET"):
                     self.consume("COMMA")
                 else:
-                    self.consume("RBRACKET")
                     break
-                
+            self.consume("RBRACKET")    
             return ("ListNode",values)
 
         else:
@@ -70,11 +72,26 @@ class Parser():
             self.currentToken = self.tokens[self.position]
         else:
             self.currentToken = None
+    def parseBlock(self,mode):
+        oldIf, oldLoop, oldFunc = self.ifMode, self.loopMode, self.functionMode
+
+        if mode == "if":
+            self.ifMode = True
+        elif mode == "loop":
+            self.loopMode = True
+        elif mode == "func":
+            self.functionMode = True
+        block_nodes = self.parser()
+        self.consume("RBRACE")
+
+        self.ifMode, self.loopMode, self.functionMode = oldIf, oldLoop, oldFunc
+
+        return block_nodes
 
     def parser(self):
         node = []
         while(self.currentToken[0] != "EOF"):
-            if (self.functionMode and self.currentToken[0] == "RBRACE"):
+            if ((self.functionMode or self.ifMode or self.loopMode) and self.currentToken[0] == "RBRACE"):
                 break
             
             if (self.currentToken[0] == "PRINT_COMMAND"):
@@ -165,7 +182,6 @@ class Parser():
                 node.append(("ModNode",varName,value))
 
             elif (self.currentToken[0] == "FUNCTIONDEFINE_COMMAND"):
-                self.functionMode = True
                 self.consume("FUNCTIONDEFINE_COMMAND")
                 funcName = self.consume("ID")
                 self.consume("LPAREN")
@@ -177,9 +193,8 @@ class Parser():
                           self.consume("COMMA")
                 self.consume("RPAREN")
                 self.consume("LBRACE")
-                while (self.currentToken[0] != "EOF" and self.currentToken[0] != "RBRACE"):
-                    functionNode = self.parser()
-                self.consume("RBRACE")
+
+                functionNode = self.parseBlock("func")
 
                 node.append(("FunctionDefineNode",funcName,params,functionNode))
 
@@ -256,15 +271,11 @@ class Parser():
                 node.append(("CompareNode",val1,logicOp,val2,assignVar))
             
             elif (self.currentToken[0] == "IF_COMMAND"):
-                self.functionMode = True
                 self.consume("IF_COMMAND")
                 result = self.valueNode()
                 self.consume("LBRACE")
-                ifBody = []
-                while (self.currentToken[0] != "EOF" and self.currentToken[0] != "RBRACE"):
-                    ifBody.extend(self.parser())
                 
-                self.consume("RBRACE")
+                ifBody = self.parseBlock("if")
 
                 while (self.currentToken and self.currentToken[0] == "NEWLINE"):
                     self.advance()
@@ -272,12 +283,10 @@ class Parser():
                 if (self.currentToken[0] == "ELSE_COMMAND"):
                     self.consume("ELSE_COMMAND")
                     self.consume("LBRACE")
-                    elseBody = []
-                    while (self.currentToken[0] != "EOF" and self.currentToken[0] != "RBRACE"):
-                        elseBody.extend(self.parser())
+                    elseBody = self.parseBlock("if")
                     self.consume("RBRACE")
                 node.append(("IfNode",result,ifBody,elseBody))
-            
+
             elif (self.currentToken[0] == "INPUT_COMMAND"):
                 self.consume("INPUT_COMMAND")
                 self.consume("LT")
@@ -287,21 +296,18 @@ class Parser():
                 node.append(("InputNode",dtype,varName))
             
             elif (self.currentToken[0] == "LOOP_COMMAND"):
-                self.functionMode = True
                 self.consume("LOOP_COMMAND")
                 loopAmount = self.valueNode()
-                loopBody = []
                 self.consume("LBRACE")
-                while (self.currentToken[0] != "EOF" and self.currentToken[0] != "RBRACE"):
-                    loopBody.extend(self.parser())
-                self.consume("RBRACE")
+                loopBody = self.parseBlock("loop")
                 node.append(("LoopNode",loopAmount,loopBody))
-            
+
             elif (self.currentToken[0] == "BREAK_COMMAND"):
                 self.consume("BREAK_COMMAND")
                 node.append(["BreakNode"])
             else:
                 self.advance()
+            
         return node
 
 if __name__ == "__main__":
