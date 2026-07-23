@@ -28,6 +28,11 @@ class Error():
         self.head()
         print(f"Sıfıra Bölünme Hatası > {content}")
         sys.exit(1)
+
+    def valueError(self,content: str):
+        self.head()
+        print(f"Değer Hatası > {content}")
+        sys.exit(1)
 class Interpreter():
     def __init__(self,text: str):
         self.node = ()
@@ -41,7 +46,8 @@ class Interpreter():
         self.turnToTypeMap = {int : "INT",
                                   float : "FLOAT",
                                   bool : "BOOL",
-                                  str : "STRING"}
+                                  str : "STRING",
+                                  }
 
     def resolve(self,valNode: tuple):
 
@@ -154,8 +160,25 @@ class Interpreter():
                 self.variables[varName] = ("ValueNode",(self.turnToTypeMap[type(result)],result))
 
             elif (varValue[0] == "ListNode"):
-                pass
-        
+                varValueListValues = list(varValue[1])
+                
+                if (addedVal[0] == "ValueNode" and addedVal[1][0] == "ID"):
+                    
+                    addedVarName = addedVal[1]
+                    if (addedVarName in self.variables):
+                        varValue = self.variables[addedVarName]
+
+                    else:
+                        self.errorManager.variableError(f"'{varName}' isimli bir değişken bulunamadı")
+                    varValueListValues.append(varValue)
+            
+                else:
+                    varValueListValues.append(addedVal)
+                self.variables[varName] = ("ListNode",varValueListValues)
+
+                
+            
+
         else:
             self.errorManager.variableError(f"'{varName[1]}' isimlli bir değişken bulunamadı")
        
@@ -173,8 +196,27 @@ class Interpreter():
                 except TypeError:
                     self.errorManager.typeError("bu iki değer birbiri ile çıkarılamaz")
                 self.variables[varName] = ("ValueNode",(self.turnToTypeMap[type(result)],result))
+            elif (varValue[0] == "ListNode"):
+                
+                varValueListValues = list(varValue[1])
+                if (addedVal[0] == "ValueNode" and addedVal[1][0] == "ID"):
+                    
+                    addedVarName = addedVal[1]
+                    if (addedVarName in self.variables):
+                        varValue = self.variables[addedVarName]
 
-        
+                    else:
+                        self.errorManager.variableError(f"{varName} isimli bir değişken bulunamadı")
+                    try:
+                        varValueListValues.remove(varValue)
+                    except ValueError:
+                        self.errorManager.valueError(f"{self.resolve(addedVal)} listede yok")
+                else:
+                    try:
+                        varValueListValues.remove(varValue)
+                    except ValueError:
+                        self.errorManager.valueError(f"{self.resolve(addedVal)} listede yok")
+                self.variables[varName] = ("ListNode",varValueListValues)
         else:
             self.errorManager.variableError(f"'{varName[1]}' isimlli bir değişken bulunamadı")
     
