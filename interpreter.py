@@ -2,12 +2,15 @@ from parser import Parser
 from lexer import Lexer
 import sys
 
+
 class Error():
-    def __init__(self,text: str):
+    def __init__(self,text: str,pos = 0):
         self.text = text
+        self.textList = text.split("\n")
+        self.position = pos
 
     def head(self):#her hatada yazılacak olan dosya bilgisi ve hatalı konum.
-        print(f"Dosya '{sys.argv[0]}'\n\t->")
+        print(f"Dosya '{sys.argv[0]}'\n\t->{self.textList[self.position]}")
     
     def syntaxError(self,content: str):
         self.head()
@@ -33,16 +36,21 @@ class Error():
         self.head()
         print(f"Değer Hatası > {content}")
         sys.exit(1)
+
+    def undefinedFunctionError(self,content: str):
+        self.head()
+        print(f"Tanımsız Fonksiyon Hatası > {content}")
+        sys.exit(1)
 class Interpreter():
     def __init__(self,text: str):
         self.node = ()
         self.text = text
         self.position = 0
         self.currentNode = ()
-        self.variables =self.variables = {}
+        self.variables = {}
         self.functions = {}
         self.builtInFunctions = {}
-        self.errorManager = Error(text)
+        self.errorManager = Error(text,self.position)
         self.turnToTypeMap = {int : "INT",
                                   float : "FLOAT",
                                   bool : "BOOL",
@@ -78,10 +86,6 @@ class Interpreter():
                 
                 value = self.resolve(value)
                 return value
-            
-            else:
-                print(valNode)
-        
     def printCommand(self):
         valueNodes = self.currentNode[1]
         willPrint = ""
@@ -200,20 +204,22 @@ class Interpreter():
                 
                 varValueListValues = list(varValue[1])
                 if (addedVal[0] == "ValueNode" and addedVal[1][0] == "ID"):
-                    
+                    print(varValueListValues)
                     addedVarName = addedVal[1]
                     if (addedVarName in self.variables):
                         varValue = self.variables[addedVarName]
-
+                    
                     else:
                         self.errorManager.variableError(f"{varName} isimli bir değişken bulunamadı")
                     try:
+                        
                         varValueListValues.remove(varValue)
                     except ValueError:
                         self.errorManager.valueError(f"{self.resolve(addedVal)} listede yok")
                 else:
+
                     try:
-                        varValueListValues.remove(varValue)
+                        varValueListValues.remove(addedVal)
                     except ValueError:
                         self.errorManager.valueError(f"{self.resolve(addedVal)} listede yok")
                 self.variables[varName] = ("ListNode",varValueListValues)
@@ -435,14 +441,17 @@ class Interpreter():
             resolvedVal = ("BOOL",rresult)
 
         self.variables[varName] = ("ValueNode",resolvedVal)
-    
+
+
     def interpreter(self,nodes: tuple):
         if not nodes:
             return
 
-        for node in nodes:
+        for position,node in enumerate(nodes):
+            self.position = position
             self.currentNode = node
             nodeType = self.currentNode[0]
+            self.errorManager = Error(self.text,self.position)
 
             if nodeType == "PrintNode":
                 self.printCommand()
@@ -474,12 +483,17 @@ class Interpreter():
                 result = self.ifCommand()
                 if (result == "BreakLoop"):
                     return "BreakLoop"
+                    
+                
             elif nodeType == "InputNode":
                 self.inputCommand()
             elif nodeType == "LoopNode":
                 self.loopCommand()
             elif nodeType == "BreakNode":
                 return "BreakLoop"
+
+            elif nodeType == "ReturnNode":
+                return self.currentNode
             
             else:
                 self.errorManager.syntaxError(f"'{self.currentNode}' bilinmeyen komut.")
