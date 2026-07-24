@@ -41,6 +41,7 @@ class Parser():
         else:
             value = self.consume("INT","FLOAT","STRING","BOOL","ID")
             if (value[0] == "ID" and self.currentToken[0] == "LPAREN"):
+                funcName = value[1]
                 self.consume("LPAREN")
                 params = []
                 while (not self.currentToken[0] in self.endTokens and self.currentToken[0] != "RPAREN"):
@@ -49,15 +50,11 @@ class Parser():
                     if (not self.currentToken[0] == "RPAREN"):
                         self.consume("COMMA")
                 self.consume("RPAREN")
-                value = ("FunctionCall",params)
+                value = ("FunctionCallNode",funcName,params)
             
         
         node = ("ValueNode",value)
         return node
-    def lookAhead(self,offset = 1):
-        if (self.position + offset < len(self.tokens)):
-            return self.tokens[self.position + offset][0]
-        return None
     def consume(self,*types):
         if (self.currentToken[0] in types):
             val = self.currentToken
@@ -67,8 +64,8 @@ class Parser():
             self.errorManager.syntaxError(f"beklenmeyen token '{",".join(types)}' tokenleri bekleniyordu '{self.currentToken[0]}' geldi.")
         
     def advance(self):
-        if (self.position + 1 < len(self.tokens)):
-            self.position += 1
+        self.position += 1
+        if self.position < len(self.tokens):
             self.currentToken = self.tokens[self.position]
         else:
             self.currentToken = None
@@ -183,7 +180,7 @@ class Parser():
 
             elif (self.currentToken[0] == "FUNCTIONDEFINE_COMMAND"):
                 self.consume("FUNCTIONDEFINE_COMMAND")
-                funcName = self.consume("ID")
+                funcName = self.consume("ID")[1]
                 self.consume("LPAREN")
                 params = []
                 while (not self.currentToken[0] in self.endTokens and self.currentToken[0] != "RPAREN"):
@@ -202,12 +199,13 @@ class Parser():
                 self.consume("RETURN_COMMAND")
                 if (not self.functionMode):
                     self.errorManager.syntaxError("'döndür' komutu sadece fonksiyon içinde çalışabilir")
+                self.consume("LT")
                 value = self.valueNode()
                 node.append(("ReturnNode",value))
                 self.consume("NEWLINE","RBRACE")
             
             elif (self.currentToken[0] == "ID"):
-                funcName = self.consume("ID")
+                funcName = self.consume("ID")[1]
                 self.consume("LPAREN")
                 params = []
                 while (not self.currentToken[0] in self.endTokens and self.currentToken[0] != "RPAREN"):
