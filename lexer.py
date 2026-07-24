@@ -59,8 +59,7 @@ class Lexer():
     def lookAhead(self,offset = 1):
         if (self.position + offset < len(self.text) ):
             return self.text[self.position + offset]
-        else:
-            self.currentLetter = None
+        return None
 
     def alphaMod(self):
         alphaPack = ""
