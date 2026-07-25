@@ -303,6 +303,18 @@ class Parser():
             elif (self.currentToken[0] == "BREAK_COMMAND"):
                 self.consume("BREAK_COMMAND")
                 node.append(["BreakNode"])
+
+            elif (self.currentToken[0] == "WHILE_COMMAND"):
+                self.consume("WHILE_COMMAND")
+                result = self.valueNode()
+                self.consume("LBRACE")
+            
+                whileBody = self.parseBlock("loop")
+            
+                while (self.currentToken and self.currentToken[0] == "NEWLINE"):
+                    self.advance()
+
+                node.append(("WhileNode",result,whileBody))
             else:
                 self.advance()
             
