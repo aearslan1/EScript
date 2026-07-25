@@ -442,6 +442,21 @@ class Interpreter():
 
         self.variables[varName] = ("ValueNode",resolvedVal)
 
+    def whileCommand(self):
+        conditionVar = self.currentNode[1]
+        whileBody = self.currentNode[2]
+        condition = self.resolve(conditionVar)
+        while True:
+            condition = self.resolve(conditionVar)
+            if (condition == "yanlış"):
+                break
+            else:
+                result = self.interpreter(whileBody)
+                if (result == 'BreakLoop'):
+                    break
+
+        
+            
 
     def interpreter(self,nodes: tuple):
         if not nodes:
@@ -487,6 +502,8 @@ class Interpreter():
                 
             elif nodeType == "InputNode":
                 self.inputCommand()
+            elif nodeType == "WhileNode":
+                self.whileCommand()
             elif nodeType == "LoopNode":
                 self.loopCommand()
             elif nodeType == "BreakNode":
