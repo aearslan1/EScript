@@ -39,10 +39,10 @@ EScript doesn't just run magic; it processes your code through three core stages
 | `ekle`, `çıkar` | Basic addition and subtraction |
 | `çarp`, `böl`, `mod` | Multiplication, division, and modulo |
 | `eğer`, `değilse` | Conditional statements (`if` / `else`) |
-| `döngü` | Loop execution block |
+| `döngü`, `while` | Loop execution blocks |
 | `kır` | Break out of a loop |
 | `krş` | Evaluate comparison statements |
-| `and`, `or`, `not` | Logical operations |
+| `and`, `or`, `not`, `xor` | Logical operations |
 
 > 💡 **Tip:** Any line starting with `#` is treated as a comment and completely ignored.
 
